@@ -248,6 +248,7 @@
   .badge-med  { background: #FEF3C7; color: #92400E; }
   .badge-low  { background: #DCFCE7; color: #166534; }
   .badge-rep  { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+  .badge-creator { background: #F3E8FF; color: #7C3AED; border: 1px solid #E9D5FF; }
   .badge-open   { background: var(--accent-bg); color: var(--accent-text); }
   .badge-closed { background: var(--success-bg); color: var(--success-text); }
   .badge-overdue { background: var(--danger-bg); color: var(--danger-text); }
@@ -374,6 +375,7 @@
   ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
 </style>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
 
@@ -615,17 +617,17 @@ async function loadTasks() {
     if (raw) return JSON.parse(raw);
   } catch(e) {}
   return [
-    {id:1, title:'Follow up with Acme Corp on Q3 proposal', rep:'Jen Nelson', priority:'High', due:'2026-06-12', done:false, closedBy:null, notes:'They requested a revised deck.', comments:[], createdAt: today},
-    {id:2, title:'Prepare demo for TechStart Inc.', rep:'Maggie Luo', priority:'High', due:'2026-06-11', done:false, closedBy:null, notes:'', comments:[], createdAt: today},
-    {id:3, title:'Send updated pricing sheet to prospects', rep:'Scott Hockaday', priority:'Med', due:'2026-06-15', done:false, closedBy:null, notes:'', comments:[], createdAt: today},
-    {id:4, title:'Update CRM with last week\'s calls', rep:'Amy Perez', priority:'Low', due:'2026-06-09', done:true, closedBy:'Amy Perez', notes:'', comments:[], createdAt: today},
-    {id:5, title:'Review and approve team quotas', rep:'Scott Hockaday', priority:'High', due:'2026-06-13', done:false, closedBy:null, notes:'', comments:[], createdAt: today},
-    {id:6, title:'Cold outreach — new territory list', rep:'Brian Johnson', priority:'Med', due:'2026-06-18', done:false, closedBy:null, notes:'', comments:[], createdAt: today},
-    {id:7, title:'Schedule intro calls with new prospects', rep:'Wayne Turner', priority:'Med', due:'2026-06-16', done:false, closedBy:null, notes:'', comments:[], createdAt: today},
-    {id:8, title:'Complete onboarding training modules', rep:'McRae Liburdi', priority:'High', due:'2026-06-14', done:false, closedBy:null, notes:'', comments:[], createdAt: today},
-    {id:9, title:'Territory mapping — identify top 20 accounts', rep:'Kiana Desrosiers', priority:'High', due:'2026-06-17', done:false, closedBy:null, notes:'', comments:[], createdAt: today},
-    {id:10, title:'Submit weekly activity report', rep:'Jimmy N. Monreal', priority:'Med', due:'2026-06-13', done:false, closedBy:null, notes:'', comments:[], createdAt: today},
-    {id:11, title:'Set up CRM pipeline for new territory', rep:'Devon Brent', priority:'High', due:'2026-06-15', done:false, closedBy:null, notes:'', comments:[], createdAt: today},
+    {id:1, title:'Follow up with Acme Corp on Q3 proposal', rep:'Jen Nelson', priority:'High', due:'2026-06-12', done:false, closedBy:null, notes:'They requested a revised deck.', comments:[], createdAt: today, createdBy:'Scott Hockaday'},
+    {id:2, title:'Prepare demo for TechStart Inc.', rep:'Maggie Luo', priority:'High', due:'2026-06-11', done:false, closedBy:null, notes:'', comments:[], createdAt: today, createdBy:'Scott Hockaday'},
+    {id:3, title:'Send updated pricing sheet to prospects', rep:'Scott Hockaday', priority:'Med', due:'2026-06-15', done:false, closedBy:null, notes:'', comments:[], createdAt: today, createdBy:'Scott Hockaday'},
+    {id:4, title:'Update CRM with last week\'s calls', rep:'Amy Perez', priority:'Low', due:'2026-06-09', done:true, closedBy:'Amy Perez', notes:'', comments:[], createdAt: today, createdBy:'Scott Hockaday'},
+    {id:5, title:'Review and approve team quotas', rep:'Scott Hockaday', priority:'High', due:'2026-06-13', done:false, closedBy:null, notes:'', comments:[], createdAt: today, createdBy:'Scott Hockaday'},
+    {id:6, title:'Cold outreach — new territory list', rep:'Brian Johnson', priority:'Med', due:'2026-06-18', done:false, closedBy:null, notes:'', comments:[], createdAt: today, createdBy:'Scott Hockaday'},
+    {id:7, title:'Schedule intro calls with new prospects', rep:'Wayne Turner', priority:'Med', due:'2026-06-16', done:false, closedBy:null, notes:'', comments:[], createdAt: today, createdBy:'Scott Hockaday'},
+    {id:8, title:'Complete onboarding training modules', rep:'McRae Liburdi', priority:'High', due:'2026-06-14', done:false, closedBy:null, notes:'', comments:[], createdAt: today, createdBy:'Scott Hockaday'},
+    {id:9, title:'Territory mapping — identify top 20 accounts', rep:'Kiana Desrosiers', priority:'High', due:'2026-06-17', done:false, closedBy:null, notes:'', comments:[], createdAt: today, createdBy:'Scott Hockaday'},
+    {id:10, title:'Submit weekly activity report', rep:'Jimmy N. Monreal', priority:'Med', due:'2026-06-13', done:false, closedBy:null, notes:'', comments:[], createdAt: today, createdBy:'Scott Hockaday'},
+    {id:11, title:'Set up CRM pipeline for new territory', rep:'Devon Brent', priority:'High', due:'2026-06-15', done:false, closedBy:null, notes:'', comments:[], createdAt: today, createdBy:'Scott Hockaday'},
   ];
 }
 
@@ -862,6 +864,7 @@ function taskHTML(t) {
         <div class="task-meta">
           <span class="badge badge-${priClass}">${t.priority === 'Med' ? 'Medium' : t.priority}</span>
           <span class="badge badge-rep"><i class="ti ti-user" style="font-size:10px"></i> ${t.rep}</span>
+          ${t.createdBy ? `<span class="badge badge-creator"><i class="ti ti-user-plus" style="font-size:10px"></i> Created by ${t.createdBy}</span>` : ''}
           ${t.due ? `<span class="badge ${over ? 'badge-overdue' : 'badge-due'}"><i class="ti ti-calendar" style="font-size:10px"></i> ${fmt(t.due)}${over ? ' · overdue' : ''}</span>` : ''}
           ${t.done ? `<span class="badge badge-closed"><i class="ti ti-circle-check" style="font-size:10px"></i> Closed by ${t.closedBy}</span>` : `<span class="badge badge-open">Open</span>`}
           ${t.comments && t.comments.length ? `<span class="badge badge-rep"><i class="ti ti-message" style="font-size:10px"></i> ${t.comments.length}</span>` : ''}
@@ -895,7 +898,12 @@ function toggleDone(id) {
   t.done = !t.done;
   t.closedBy = t.done ? getViewer() : null;
   saveTasks(); render();
-  showToast(t.done ? '✓ Task closed' : 'Task reopened');
+  if (t.done) {
+    sendEmailNotification('completed', t);
+    showToast('✓ Task closed');
+  } else {
+    showToast('Task reopened');
+  }
 }
 
 function deleteTask(id) {
@@ -952,7 +960,7 @@ function addComment(id) {
 function quickAdd() {
   const title = document.getElementById('quickTitle').value.trim();
   if (!title) { document.getElementById('quickTitle').focus(); return; }
-  tasks.unshift({
+  const newTask = {
     id: nextId++,
     title,
     rep: document.getElementById('quickRep').value,
@@ -961,11 +969,14 @@ function quickAdd() {
     done: false, closedBy: null,
     notes: '',
     comments: [],
-    createdAt: today
-  });
+    createdAt: today,
+    createdBy: getViewer()
+  };
+  tasks.unshift(newTask);
   document.getElementById('quickTitle').value = '';
   document.getElementById('quickDue').value = '';
   saveTasks(); render();
+  sendEmailNotification('created', newTask);
   showToast('Task added');
 }
 
@@ -1018,7 +1029,7 @@ function saveModal() {
     }
     showToast('Task updated');
   } else {
-    tasks.unshift({
+    const newTask = {
       id: nextId++,
       title,
       notes: document.getElementById('mNotes').value.trim(),
@@ -1027,8 +1038,11 @@ function saveModal() {
       due: document.getElementById('mDue').value || '',
       done: false, closedBy: null,
       comments: [],
-      createdAt: today
-    });
+      createdAt: today,
+      createdBy: getViewer()
+    };
+    tasks.unshift(newTask);
+    sendEmailNotification('created', newTask);
     showToast('Task added');
   }
   saveTasks(); closeModal(); render();
@@ -1036,12 +1050,13 @@ function saveModal() {
 
 // ─── Export CSV ──────────────────────────────────────────────────────────────
 function exportCSV() {
-  const rows = [['ID','Title','Assigned To','Priority','Due Date','Status','Closed By','Notes','Comments']];
+  const rows = [['ID','Title','Assigned To','Created By','Priority','Due Date','Status','Closed By','Notes','Comments']];
   tasks.forEach(t => {
     rows.push([
       t.id,
       `"${(t.title||'').replace(/"/g,'""')}"`,
       t.rep,
+      t.createdBy || '',
       t.priority,
       t.due || '',
       t.done ? 'Closed' : isOverdue(t) ? 'Overdue' : 'Open',
@@ -1063,6 +1078,63 @@ function clearFilters() {
   document.getElementById('filterPriority').value = '';
   document.getElementById('filterSearch').value = '';
   render();
+}
+
+// ─── Email Notifications (EmailJS) ───────────────────────────────────────────
+// SETUP INSTRUCTIONS:
+// 1. Create a free account at https://www.emailjs.com/
+// 2. Add an email service (Gmail, Outlook, etc.)
+// 3. Create an email template with variables: {{task_title}}, {{assigned_to}}, {{created_by}}, {{priority}}, {{due_date}}, {{status}}, {{closed_by}}
+// 4. Replace the values below with your EmailJS credentials:
+const EMAILJS_PUBLIC_KEY = '';  // Your EmailJS public key
+const EMAILJS_SERVICE_ID = ''; // Your EmailJS service ID
+const EMAILJS_TEMPLATE_ID = ''; // Your EmailJS template ID
+const NOTIFY_EMAIL = ''; // Email address to receive notifications (e.g., manager's email)
+
+// Rep email mapping — add your team's emails here
+const REP_EMAILS = {
+  'Scott Hockaday': '',
+  'Jen Nelson': '',
+  'Maggie Luo': '',
+  'Amy Perez': '',
+  'Brian Johnson': '',
+  'Wayne Turner': '',
+  'McRae Liburdi': '',
+  'Kiana Desrosiers': '',
+  'Jimmy N. Monreal': '',
+  'Devon Brent': ''
+};
+
+function sendEmailNotification(type, task) {
+  // Skip if EmailJS is not configured
+  if (!EMAILJS_PUBLIC_KEY || !EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID) {
+    console.log(`[Email] Would send "${type}" notification for: ${task.title} (EmailJS not configured)`);
+    return;
+  }
+
+  const templateParams = {
+    task_title: task.title,
+    assigned_to: task.rep,
+    created_by: task.createdBy || 'Unknown',
+    priority: task.priority,
+    due_date: task.due ? fmt(task.due) : 'No due date',
+    status: type === 'completed' ? 'Completed' : 'New Task Created',
+    closed_by: task.closedBy || '',
+    to_email: type === 'completed' ? (NOTIFY_EMAIL || REP_EMAILS[task.createdBy]) : (REP_EMAILS[task.rep] || NOTIFY_EMAIL)
+  };
+
+  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams, EMAILJS_PUBLIC_KEY)
+    .then(() => {
+      console.log(`[Email] ${type} notification sent for: ${task.title}`);
+    })
+    .catch((err) => {
+      console.warn(`[Email] Failed to send ${type} notification:`, err);
+    });
+}
+
+// Initialize EmailJS if configured
+if (EMAILJS_PUBLIC_KEY) {
+  emailjs.init(EMAILJS_PUBLIC_KEY);
 }
 
 // Keyboard: Esc closes modal
