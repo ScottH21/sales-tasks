@@ -391,11 +391,16 @@
     <div class="viewer-selector">
       <label>Viewing as</label>
       <select id="viewAs" onchange="onViewerChange()">
-        <option value="Manager">Manager</option>
-        <option value="Alex">Alex</option>
-        <option value="Jordan">Jordan</option>
-        <option value="Sam">Sam</option>
-        <option value="Taylor">Taylor</option>
+        <option value="Scott Hockaday">Scott Hockaday (Manager)</option>
+        <option value="Jen Nelson">Jen Nelson</option>
+        <option value="Maggie Luo">Maggie Luo</option>
+        <option value="Amy Perez">Amy Perez</option>
+        <option value="Brian Johnson">Brian Johnson</option>
+        <option value="Wayne Turner">Wayne Turner</option>
+        <option value="McRae Liburdi">McRae Liburdi</option>
+        <option value="Kiana Desrosiers">Kiana Desrosiers</option>
+        <option value="Jimmy N. Monreal">Jimmy N. Monreal</option>
+        <option value="Devon Brent">Devon Brent</option>
       </select>
     </div>
 
@@ -466,11 +471,16 @@
         <div class="add-row">
           <input type="text" id="quickTitle" placeholder="Task title…" onkeydown="if(event.key==='Enter')quickAdd()" />
           <select id="quickRep">
-            <option value="Manager">Manager</option>
-            <option value="Alex">Alex</option>
-            <option value="Jordan">Jordan</option>
-            <option value="Sam">Sam</option>
-            <option value="Taylor">Taylor</option>
+            <option value="Scott Hockaday">Scott Hockaday (Manager)</option>
+            <option value="Jen Nelson">Jen Nelson</option>
+            <option value="Maggie Luo">Maggie Luo</option>
+            <option value="Amy Perez">Amy Perez</option>
+            <option value="Brian Johnson">Brian Johnson</option>
+            <option value="Wayne Turner">Wayne Turner</option>
+            <option value="McRae Liburdi">McRae Liburdi</option>
+            <option value="Kiana Desrosiers">Kiana Desrosiers</option>
+            <option value="Jimmy N. Monreal">Jimmy N. Monreal</option>
+            <option value="Devon Brent">Devon Brent</option>
           </select>
           <select id="quickPriority">
             <option value="High">High priority</option>
@@ -489,11 +499,16 @@
         <span class="filter-label">Filter:</span>
         <select id="filterRep" onchange="render()">
           <option value="">All reps</option>
-          <option value="Manager">Manager</option>
-          <option value="Alex">Alex</option>
-          <option value="Jordan">Jordan</option>
-          <option value="Sam">Sam</option>
-          <option value="Taylor">Taylor</option>
+          <option value="Scott Hockaday">Scott Hockaday (Manager)</option>
+          <option value="Jen Nelson">Jen Nelson</option>
+          <option value="Maggie Luo">Maggie Luo</option>
+          <option value="Amy Perez">Amy Perez</option>
+          <option value="Brian Johnson">Brian Johnson</option>
+          <option value="Wayne Turner">Wayne Turner</option>
+          <option value="McRae Liburdi">McRae Liburdi</option>
+          <option value="Kiana Desrosiers">Kiana Desrosiers</option>
+          <option value="Jimmy N. Monreal">Jimmy N. Monreal</option>
+          <option value="Devon Brent">Devon Brent</option>
         </select>
         <select id="filterPriority" onchange="render()">
           <option value="">All priorities</option>
@@ -529,11 +544,16 @@
       <div class="modal-field">
         <label>Assigned to</label>
         <select id="mRep">
-          <option value="Manager">Manager</option>
-          <option value="Alex">Alex</option>
-          <option value="Jordan">Jordan</option>
-          <option value="Sam">Sam</option>
-          <option value="Taylor">Taylor</option>
+          <option value="Scott Hockaday">Scott Hockaday (Manager)</option>
+          <option value="Jen Nelson">Jen Nelson</option>
+          <option value="Maggie Luo">Maggie Luo</option>
+          <option value="Amy Perez">Amy Perez</option>
+          <option value="Brian Johnson">Brian Johnson</option>
+          <option value="Wayne Turner">Wayne Turner</option>
+          <option value="McRae Liburdi">McRae Liburdi</option>
+          <option value="Kiana Desrosiers">Kiana Desrosiers</option>
+          <option value="Jimmy N. Monreal">Jimmy N. Monreal</option>
+          <option value="Devon Brent">Devon Brent</option>
         </select>
       </div>
       <div class="modal-field">
@@ -595,12 +615,17 @@ async function loadTasks() {
     if (raw) return JSON.parse(raw);
   } catch(e) {}
   return [
-    {id:1, title:'Follow up with Acme Corp on Q3 proposal', rep:'Alex', priority:'High', due:'2026-06-12', done:false, closedBy:null, notes:'They requested a revised deck.', comments:[], createdAt: today},
-    {id:2, title:'Prepare demo for TechStart Inc.', rep:'Jordan', priority:'High', due:'2026-06-11', done:false, closedBy:null, notes:'', comments:[], createdAt: today},
-    {id:3, title:'Send updated pricing sheet to prospects', rep:'Manager', priority:'Med', due:'2026-06-15', done:false, closedBy:null, notes:'', comments:[], createdAt: today},
-    {id:4, title:'Update CRM with last week\'s calls', rep:'Sam', priority:'Low', due:'2026-06-09', done:true, closedBy:'Sam', notes:'', comments:[], createdAt: today},
-    {id:5, title:'Review and approve team quotas', rep:'Manager', priority:'High', due:'2026-06-13', done:false, closedBy:null, notes:'', comments:[], createdAt: today},
-    {id:6, title:'Cold outreach — new territory list', rep:'Taylor', priority:'Med', due:'2026-06-18', done:false, closedBy:null, notes:'', comments:[], createdAt: today},
+    {id:1, title:'Follow up with Acme Corp on Q3 proposal', rep:'Jen Nelson', priority:'High', due:'2026-06-12', done:false, closedBy:null, notes:'They requested a revised deck.', comments:[], createdAt: today},
+    {id:2, title:'Prepare demo for TechStart Inc.', rep:'Maggie Luo', priority:'High', due:'2026-06-11', done:false, closedBy:null, notes:'', comments:[], createdAt: today},
+    {id:3, title:'Send updated pricing sheet to prospects', rep:'Scott Hockaday', priority:'Med', due:'2026-06-15', done:false, closedBy:null, notes:'', comments:[], createdAt: today},
+    {id:4, title:'Update CRM with last week\'s calls', rep:'Amy Perez', priority:'Low', due:'2026-06-09', done:true, closedBy:'Amy Perez', notes:'', comments:[], createdAt: today},
+    {id:5, title:'Review and approve team quotas', rep:'Scott Hockaday', priority:'High', due:'2026-06-13', done:false, closedBy:null, notes:'', comments:[], createdAt: today},
+    {id:6, title:'Cold outreach — new territory list', rep:'Brian Johnson', priority:'Med', due:'2026-06-18', done:false, closedBy:null, notes:'', comments:[], createdAt: today},
+    {id:7, title:'Schedule intro calls with new prospects', rep:'Wayne Turner', priority:'Med', due:'2026-06-16', done:false, closedBy:null, notes:'', comments:[], createdAt: today},
+    {id:8, title:'Complete onboarding training modules', rep:'McRae Liburdi', priority:'High', due:'2026-06-14', done:false, closedBy:null, notes:'', comments:[], createdAt: today},
+    {id:9, title:'Territory mapping — identify top 20 accounts', rep:'Kiana Desrosiers', priority:'High', due:'2026-06-17', done:false, closedBy:null, notes:'', comments:[], createdAt: today},
+    {id:10, title:'Submit weekly activity report', rep:'Jimmy N. Monreal', priority:'Med', due:'2026-06-13', done:false, closedBy:null, notes:'', comments:[], createdAt: today},
+    {id:11, title:'Set up CRM pipeline for new territory', rep:'Devon Brent', priority:'High', due:'2026-06-15', done:false, closedBy:null, notes:'', comments:[], createdAt: today},
   ];
 }
 
@@ -656,7 +681,7 @@ async function initApp() {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 const getViewer = () => document.getElementById('viewAs').value;
-const isManager = () => getViewer() === 'Manager';
+const isManager = () => getViewer() === 'Scott Hockaday';
 const isOverdue = t => !t.done && t.due && t.due < today;
 const canEdit = t => isManager() || t.rep === getViewer();
 
@@ -750,7 +775,7 @@ function renderStats() {
   }
 
   // Rep nav
-  const reps = ['Manager', 'Alex', 'Jordan', 'Sam', 'Taylor'];
+  const reps = ['Scott Hockaday', 'Jen Nelson', 'Maggie Luo', 'Amy Perez', 'Brian Johnson', 'Wayne Turner', 'McRae Liburdi', 'Kiana Desrosiers', 'Jimmy N. Monreal', 'Devon Brent'];
   document.getElementById('repNav').innerHTML = reps.map(r => {
     const count = tasks.filter(t => t.rep === r && !t.done).length;
     return `<div class="nav-item" style="font-size:12px" onclick="filterByRep('${r}')">
