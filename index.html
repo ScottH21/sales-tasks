@@ -1088,7 +1088,7 @@ const SLACK_WEBHOOK_URL = atob(_sw[0]) + atob(_sw[1]) + atob(_sw[2]) + atob(_sw[
 
 function sendSlackNotification(task, closedBy) {
   const message = JSON.stringify({
-    text: `✅ *Task Completed*\n*${task.title}*\n• Closed by: ${closedBy}\n• Assigned to: ${task.rep}\n• Priority: ${task.priority}\n• Due: ${task.due ? fmt(task.due) : 'No due date'}\n• Completed: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`
+    text: `✅ *Task Completed*\n*${task.title}*\n• Closed by: ${closedBy}\n• Created by: ${task.createdBy || 'Unknown'}\n• Priority: ${task.priority}\n• Due: ${task.due ? fmt(task.due) : 'No due date'}\n• Completed: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`
   });
 
   fetch(SLACK_WEBHOOK_URL, {
