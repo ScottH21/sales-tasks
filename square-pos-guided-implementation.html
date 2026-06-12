@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Square POS Implementation Guide</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:900px;margin:40px auto;padding:0 32px;color:#1a1a1a;line-height:1.6;background:#fff}
+.header{border-bottom:2px solid #1a1a1a;padding-bottom:20px;margin-bottom:24px}
+.header h1{font-size:26px;font-weight:700;margin-bottom:4px}
+.header .sub{font-size:14px;color:#666;margin-bottom:16px}
+.pbar-wrap{height:6px;background:#eee;border-radius:3px;margin-bottom:6px}
+.pbar-fill{height:6px;border-radius:3px;background:#1a1a1a}
+.pbar-lbl{font-size:13px;color:#666}
+.stats{display:flex;gap:16px;margin:20px 0 32px;flex-wrap:wrap}
+.stat{background:#f5f5f5;border-radius:8px;padding:12px 20px}
+.stat .num{font-size:22px;font-weight:700}
+.stat .lbl{font-size:12px;color:#888;margin-top:2px}
+.section{margin-bottom:36px;page-break-inside:avoid}
+.sec-header{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #1a1a1a;padding-bottom:8px;margin-bottom:14px}
+.sec-title{font-size:16px;font-weight:700;color:#1a1a1a}
+.sec-count{font-size:13px;color:#888;font-weight:400}
+.why{background:#f7f7f7;border-left:3px solid #555;padding:11px 15px;margin-bottom:18px;font-size:13px;color:#555;border-radius:0 6px 6px 0}
+.why strong{color:#1a1a1a;font-weight:700}
+.task{margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #ebebeb}
+.task:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.task-row{display:flex;gap:10px;align-items:flex-start;margin-bottom:7px}
+.chk{width:18px;height:18px;border:2px solid #ccc;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;font-size:12px;color:#fff;font-weight:700}
+.chk.done{background:#1a1a1a;border-color:#1a1a1a}
+.chk.done::after{content:'✓'}
+.task-lbl{font-size:15px;font-weight:700}
+.task-lbl.done{color:#aaa;text-decoration:line-through}
+.task-desc{font-size:13px;color:#555;margin:0 0 10px 28px;line-height:1.6}
+.steps{margin:0 0 10px 28px;list-style:none}
+.steps li{display:flex;gap:9px;padding:4px 0;font-size:13px;color:#444;align-items:flex-start;border-bottom:1px solid #f5f5f5}
+.steps li:last-child{border-bottom:none}
+.step-n{background:#e8e8e8;border-radius:50%;font-size:11px;font-weight:700;width:20px;height:20px;min-width:20px;display:inline-flex;align-items:center;justify-content:center;color:#555;margin-top:1px}
+.step-n.done{background:#1a1a1a;color:#fff}
+.tip{background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:10px 13px;font-size:13px;color:#92400e;margin:8px 0 8px 28px;display:flex;gap:9px;align-items:flex-start}
+.tip-icon{font-weight:700;flex-shrink:0;font-size:14px}
+.links{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 0 28px}
+.link{font-size:12px;color:#1d4ed8;text-decoration:none;border:1px solid #bfdbfe;border-radius:5px;padding:4px 10px;background:#eff6ff}
+.link:hover{background:#dbeafe}
+.onboard{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:16px 20px;margin-bottom:28px}
+.onboard h2{font-size:15px;font-weight:700;color:#1e40af;margin-bottom:6px}
+.onboard p{font-size:13px;color:#1e40af;line-height:1.6}
+.onboard ul{margin:8px 0 0 16px;font-size:13px;color:#1e40af;line-height:1.8}
+.footer{margin-top:44px;padding-top:16px;border-top:1px solid #eee;font-size:12px;color:#aaa;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+
+/* Interactive checkbox behavior */
+input.live-check{display:none}
+.chk-wrap{cursor:pointer}
+.chk-wrap input.live-check:checked ~ .chk{background:#1a1a1a;border-color:#1a1a1a}
+.chk-wrap input.live-check:checked ~ .chk::after{content:'✓'}
+.chk-wrap input.live-check:checked ~ .task-lbl{color:#aaa;text-decoration:line-through}
+
+@media print{
+  body{margin:20px;padding:0 16px}
+  .section{break-inside:avoid}
+  .onboard{break-inside:avoid}
+  a{color:#1d4ed8}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Square POS implementation guide</h1>
+  <div class="sub">Business: _____________________________ &nbsp;&nbsp; Location: _____________________________ &nbsp;&nbsp; Rep: _____________________________ &nbsp;&nbsp; Date: _____________</div>
+  <div class="pbar-wrap"><div class="pbar-fill" style="width:0%" id="progressBar"></div></div>
+  <div class="pbar-lbl"><span id="progressLabel">0% complete &mdash; 0 of 17 tasks checked</span></div>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="num" id="statDone">0</div><div class="lbl">Tasks completed</div></div>
+  <div class="stat"><div class="num" id="statLeft">17</div><div class="lbl">Remaining</div></div>
+  <div class="stat"><div class="num" id="statPct">0%</div><div class="lbl">Complete</div></div>
+  <div class="stat"><div class="num" id="statStatus" style="font-size:15px;padding-top:4px">Not started</div><div class="lbl">Status</div></div>
+</div>
+
+<div class="onboard">
+  <h2>New to Square installations? Start here.</h2>
+  <p>This guide walks you through every step of a Square POS implementation in the correct order. For each task you'll find:</p>
+  <ul>
+    <li>A plain-English explanation of what the task is and why it matters</li>
+    <li>Numbered step-by-step instructions for exactly where to click in Square Dashboard</li>
+    <li>Rep tips — real-world advice from experienced installs</li>
+    <li>Direct links to Square's official support documentation</li>
+  </ul>
+  <p style="margin-top:8px">Check each box as you complete a task. The progress bar updates automatically. When you're done, print this page or save it as a PDF for your records.</p>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 1 — PRE-INSTALLATION MENU REVIEW
+════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="sec-header">
+    <div class="sec-title">1. Pre-installation menu review</div>
+    <div class="sec-count" id="sec_pre_count">0 / 3 tasks</div>
+  </div>
+  <div class="why"><strong>Why this matters:</strong> Before touching Square, you need to align with the seller on what they're selling. A poorly prepared menu causes rework — items missing, wrong prices, or the seller requesting major changes after setup. This section ensures you start on solid ground.</div>
+
+  <div class="task">
+    <label class="task-row chk-wrap" for="t_pre1">
+      <input type="checkbox" class="live-check task-cb" id="t_pre1" data-section="pre">
+      <span class="chk"></span>
+      <span class="task-lbl">Conduct a menu walkthrough with the seller</span>
+    </label>
+    <div class="task-desc">Sit down (or screen share) with the seller and their team to review every item, modifier, and category they want on the POS. Take notes — don't rely on memory.</div>
+    <ol class="steps">
+      <li><span class="step-n">1</span><span>Schedule 30–60 min with the seller before install day</span></li>
+      <li><span class="step-n">2</span><span>Ask for their existing menu (printed, PDF, or website link)</span></li>
+      <li><span class="step-n">3</span><span>Walk through each section: food, drinks, modifiers, combos</span></li>
+      <li><span class="step-n">4</span><span>Note any items that are seasonal or location-specific</span></li>
+      <li><span class="step-n">5</span><span>Ask about pricing — are all variations and sizes priced correctly?</span></li>
+    </ol>
+    <div class="tip"><span class="tip-icon">💡</span><span><strong>Rep tip:</strong> Ask: "Is there anything on your current menu that's changing soon?" This prevents you from loading items they'll immediately want to remove.</span></div>
+  </div>
+
+  <div class="task">
+    <label class="task-row chk-wrap" for="t_pre2">
+      <input type="checkbox" class="live-check task-cb" id="t_pre2" data-section="pre">
+      <span class="chk"></span>
+      <span class="task-lbl">Confirm the menu is finalized before installation</span>
+    </label>
+    <div class="task-desc">Get explicit sign-off that the menu is ready to go. Changes mid-install waste everyone's time and can introduce errors.</div>
+    <ol class="steps">
+      <li><span class="step-n">1</span><span>Email or message the seller: "Is your menu finalized and ready to load?"</span></li>
+      <li><span class="step-n">2</span><span>If they say "mostly" — push for full sign-off before you begin</span></li>
+      <li><span class="step-n">3</span><span>Document their confirmation (screenshot or email is fine)</span></li>
+    </ol>
+    <div class="tip"><span class="tip-icon">💡</span><span><strong>Rep tip:</strong> It's normal for sellers to want to add "just one more thing." Set expectations: bulk changes are easy before install, painful after.</span></div>
+  </div>
+
+  <div class="task">
+    <label class="task-row chk-wrap" for="t_pre3">
+      <input type="checkbox" class="live-check task-cb" id="t_pre3" data-section="pre">
+      <span class="chk"></span>
+      <span class="task-lbl">Show the seller how to create and edit menus</span>
+    </label>
+    <div class="task-desc">Empower the seller to manage their own menu going forward. Walk through Dashboard menu creation and editing so they're not dependent on you for every change.</div>
+    <ol class="steps">
+      <li><span class="step-n">1</span><span>Sign in to Square Dashboard</span></li>
+      <li><span class="step-n">2</span><span>Go to Items &amp; Orders → Menus</span></li>
+      <li><span class="step-n">3</span><span>Click Create Menu — enter a name, select locations</span></li>
+      <li><span class="step-n">4</span><span>Add categories and items to the menu, then click Save</span></li>
+      <li><span class="step-n">5</span><span>To edit: return to Menus, select the menu, make changes, Save</span></li>
+    </ol>
+    <div class="tip"><span class="tip-icon">💡</span><span><strong>Rep tip:</strong> Show them the Edit POS layout too — sellers are often surprised they can customize how items appear on the screen.</span></div>
+    <div class="links">
+      <a class="link" href="https://squareup.com/help/us/en/article/6424-create-menus-with-square-for-restaurants" target="_blank">Create and update menus ↗</a>
+      <a class="link" href="https://squareup.com/help/us/en/article/8553-manage-your-menus-across-locations-and-sales-channels" target="_blank">Manage menus across locations ↗</a>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 2 — ITEMS & CATALOG
+════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="sec-header">
+    <div class="sec-title">2. Items &amp; catalog</div>
+    <div class="sec-count" id="sec_items_count">0 / 4 tasks</div>
+  </div>
+  <div class="why"><strong>Why this matters:</strong> The item library is the backbone of the POS. Every product the seller sells needs to be here — with the right name, price, and configuration. Rushing this section leads to incorrect orders and confused staff on day one.</div>
+
+  <div class="task">
+    <label class="task-row chk-wrap" for="t_items1">
+      <input type="checkbox" class="live-check task-cb" id="t_items1" data-section="items">
+      <span class="chk"></span>
+      <span class="task-lbl">Create items in the item library</span>
+    </label>
+    <div class="task-desc">Add each product the seller sells as an item in Square Dashboard. Items can also be created directly from the POS app if needed.</div>
+    <ol class="steps">
+      <li><span class="step-n">1</span><span>Dashboard → Items &amp; Orders → Items → Create Item</span></li>
+      <li><span class="step-n">2</span><span>Enter Item Name (required)</span></li>
+      <li><span class="step-n">3</span><span>Enter Price</span></li>
+      <li><span class="step-n">4</span><span>Add Description (helps staff identify the item)</span></li>
+      <li><span class="step-n">5</span><span>Assign a Category (optional but recommended)</span></li>
+      <li><span class="step-n">6</span><span>Add an image if available</span></li>
+      <li><span class="step-n">7</span><span>Assign locations where the item will be sold</span></li>
+      <li><span class="step-n">8</span><span>Click Save</span></li>
+    </ol>
+    <div class="tip"><span class="tip-icon">💡</span><span><strong>Rep tip:</strong> Use the bulk import (CSV) if the seller has 20+ items — it's much faster than entering them one by one. See the Data Imports section.</span></div>
+    <div class="links">
+      <a class="link" href="https://squareup.com/help/us/en/article/8335-create-and-edit-items" target="_blank">Create and edit items ↗</a>
+      <a class="link" href="https://squareup.com/help/us/en/article/5153-import-items-online" target="_blank">Bulk import items ↗</a>
+    </div>
+  </div>
+
+  <div class="task">
+    <label class="task-row chk-wrap" for="t_items2">
+      <input type="checkbox" class="live-check task-cb" id="t_items2" data-section="items">
+      <span class="chk"></span>
+      <span class="task-lbl">Create and manage modifiers</span>
+    </label>
+    <div class="task-desc">Modifiers let customers customize items (e.g. sauce choices, add-ons, cooking preferences). Set these up before linking them to items.</div>
+    <ol class="steps">
+      <li><span class="step-n">1</span><span>Dashboard → Items &amp; Orders → Modifiers → Create Modifier Set</span></li>
+      <li><span class="step-n">2</span><span>Name the set (e.g. "Sauce Options", "Add-ons")</span></li>
+      <li><span class="step-n">3</span><span>Add each modifier choice (e.g. Ranch, Blue Cheese, BBQ)</span></li>
+      <li><span class="step-n">4</span><span>Set pricing for each choice if applicable</span></li>
+      <li><span class="step-n">5</span><span>Set minimum and maximum selections</span></li>
+      <li><span class="step-n">6</span><span>Toggle Required on if the customer must pick at least one</span></li>
+      <li><span class="step-n">7</span><span>Open each item → scroll to Modifier Sets → select the set → Save</span></li>
+    </ol>
+    <div class="tip"><span class="tip-icon">💡</span><span><strong>Rep tip:</strong> Keep modifier set names generic so you can reuse them across multiple items. "Protein options" can apply to salads, bowls, and sandwiches.</span></div>
+    <div class="links">
+      <a class="link" href="https://squareup.com/help/us/en/article/5119-create-and-manage-item-modifiers" target="_blank">Create and manage modifiers ↗</a>
+      <a class="link" href="https://squareup.com/help/us/en/article/6426-modifiers-and-categories-with-square-for-restaurants" target="_blank">Modifiers with Square for Restaurants ↗</a>
+    </div>
+  </div>
+
+  <div class="task">
+    <label class="task-row chk-wrap" for="t_items3">
+      <input type="checkbox" class="live-check task-cb" id="t_items3" data-section="items">
+      <span class="chk"></span>
+      <span class="task-lbl">Create and manage variations</span>
+    </label>
+    <div class="task-desc">Variations are different versions of the same item — like Small, Medium, Large or 8oz, 16oz. Each variation can have its own price.</div>
+    <ol class="steps">
+      <li><span class="step-n">1</span><span>Open an item in Dashboard</span></li>
+      <li><span class="step-n">2</span><span>Under Variations, click Add Variation</span></li>
+      <li><span class="step-n">3</span><span>Enter variation names (Small, Medium, Large)</span></li>
+      <li><span class="step-n">4</span><span>Assign a price to each variation</span></li>
+      <li><span class="step-n">5</span><span>Add SKU or barcode if tracking inventory</span></li>
+      <li><span class="step-n">6</span><span>Click Save</span></li>
+    </ol>
+    <div class="tip"><span class="tip-icon">💡</span><span><strong>Rep tip:</strong> Don't confuse variations with modifiers. Variations are mutually exclusive (a customer picks ONE size). Modifiers can allow multiple selections.</span></div>
+    <div class="links">
+      <a class="link" href="https://squareup.com/help/us/en/article/6689-item-options" target="_blank">Create and edit item options &amp; variations ↗</a>
+    </div>
+  </div>
+
+  <div class="task">
+    <label class="task-row chk-wrap" for="t_items4">
+      <input type="checkbox" class="live-check task-cb" id="t_items4" data-section="items">
+      <span class="chk"></span>
+      <span class="task-lbl">Create and manage categories</span>
+    </label>
+    <div class="task-desc">Categories organize items on the POS screen and in reports. Good category structure makes it easy for staff to find items quickly during a rush.</div>
+    <ol class="steps">
+      <li><span class="step-n">1</span><span>Dashboard → Items &amp; Orders → Categories → Create Category</span></li>
+      <li><span class="step-n">2</span><span>Enter a category name (e.g. "Burgers", "Beverages", "Desserts")</span></li>
+      <li><span class="step-n">3</span><span>Click Save</span></li>
+      <li><span class="step-n">4</span><span>Open each item and assign it to the correct category from the Category dropdown</span></li>
+    </ol>
+    <div class="tip"><span class="tip-icon">💡</span><span><strong>Rep tip:</strong> Plan category names with the seller before creating them. Changing category names later doesn't break anything, but it creates confusion for trained staff.</span></div>
+    <div class="links">
+      <a class="link" href="https://squareup.com/help/us/en/article/8024-create-and-manage-item-categories" target="_blank">Create and manage categories ↗</a>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 3 — POS LAYOUT
+════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="sec-header">
+    <div class="sec-title">3. POS layout</div>
+    <div class="sec-count" id="sec_pos_count">0 / 1 tasks</div>
+  </div>
+  <div class="why"><strong>Why this matters:</strong> The POS layout is what the seller's staff sees every day. A well-organized layout means faster transactions, fewer mistakes, and happier staff. A cluttered one creates friction on every single sale.</div>
+
+  <div class="task">
+    <label class="task-row chk-wrap" for="t_pos1">
+      <input type="checkbox" class="live-check task-cb" id="t_pos1" data-section="pos">
+      <span class="chk"></span>
+      <span class="task-lbl">Access and configure the Edit POS layout</span>
+    </label>
+    <div class="task-desc">The POS layout controls where items appear on the grid when staff are ringing up orders. You can organize by category, create shortcuts, and set up a logical flow.</div>
+    <ol class="steps">
+      <li><span class="step-n">1</span><span>Sign in to Square Dashboard</span></li>
+      <li><span class="step-n">2</span><span>Navigate to Items &amp; Orders</span></li>
+      <li><span class="step-n">3</span><span>Click Edit POS (or Point of Sale Layout — name varies by account type)</span></li>
+      <li><span class="step-n">4</span><span>Select the location you're configuring</span></li>
+      <li><span class="step-n">5</span><span>Drag and drop items or categories into the grid</span></li>
+      <li><span class="step-n">6</span><span>Set up Favorites for the seller's most common items</span></li>
+      <li><span class="step-n">7</span><span>Adjust column count and spacing if needed</span></li>
+      <li><span class="step-n">8</span><span>Click Save, then Publish if prompted</span></li>
+    </ol>
+    <div class="tip"><span class="tip-icon">💡</span><span><strong>Rep tip:</strong> Ask the seller: "What are your top 5 selling items?" Put those in the top-left of the grid — that's where staff look first.</span></div>
+    <div class="links">
+      <a class="link" href="https://squareup.com/help/us/en/article/8334-set-up-item-grid" target="_blank">Set up item grid / POS layout ↗</a>
+      <a class="link" href="https://squareup.com/help/us/en/article/7804-organize-your-menu-with-square-for-restaurants" target="_blank">Edit POS layout (Restaurants) ↗</a>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 4 — TAXES & SERVICE CHARGES
+════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="sec-header">
+    <div class="sec-title">4. Taxes &amp; service charges</div>
+    <div class="sec-count" id="sec_taxes_count">0 / 2 tasks</div>
+  </div>
+  <div class="why"><strong>Why this matters:</strong> Incorrect tax setup can create compliance issues and erode seller trust fast. Always verify taxes are correctly applied and run a test transaction before going live.</div>
+
+  <div class="task">
+    <label class="task-row chk-wrap" for="t_tax1">
+      <input type="checkbox" class="live-check task-cb" id="t_tax1" data-section="taxes">
+      <span class="chk"></span>
+      <span class="task-lbl">Verify taxes are applied correctly to all applicable items</span>
+    </label>
+    <div class="task-desc">Square lets you create tax rates and apply them to items. Check that the right rate is set for the seller's location and applied to all taxable items.</div>
+    <ol class="steps">
+      <li><span class="step-n">1</span><span>Dashboard → Settings → Business → Sales Taxes</span></li>
+      <li><span class="step-n">2</span><span>Confirm the tax rate name and percentage are correct for the seller's jurisdiction</span></li>
+      <li><span class="step-n">3</span><span>Open Items and select a few items across categories</span></li>
+      <li><span class="step-n">4</span><span>Review the Taxes section on each item — confirm the correct tax is toggled on</span></li>
+      <li><span class="step-n">5</span><span>Run a test transaction on the POS</span></li>
+      <li><span class="step-n">6</span><span>Check the order summary to confirm tax calculates correctly before completing payment</span></li>
+    </ol>
+    <div class="tip"><span class="tip-icon">💡</span><span><strong>Rep tip:</strong> Some items may be tax-exempt (e.g. grocery staples, certain beverages depending on state). Ask the seller if they have any non-taxable items before you finish.</span></div>
+    <div class="links">
+      <a class="link" href="https://squareup.com/help/us/en/article/5061-create-and-manage-your-tax-settings" target="_blank">Create and manage sales taxes ↗</a>
+      <a class="link" href="https://squareup.com/help/us/en/article/5622-use-conditional-sales-tax-rules-with-the-square-app" target="_blank">Conditional tax rules ↗</a>
+    </div>
+  </div>
+
+  <div class="task">
+    <label class="task-row chk-wrap" for="t_tax2">
+      <input type="checkbox" class="live-check task-cb" id="t_tax2" data-section="taxes">
+      <span class="chk"></span>
+      <span class="task-lbl">Verify service charges (if applicable)</span>
+    </label>
+    <div class="task-desc">Service charges are automatic fees added to orders — like an 18% gratuity for large parties or a delivery fee. Only configure if the seller uses them.</div>
+    <ol class="steps">
+      <li><span class="step-n">1</span><span>Dashboard → Account &amp; Settings → Checkout → Service Charges (path may vary by product)</span></li>
+      <li><span class="step-n">2</span><span>Confirm charge name, type (percentage or flat amount), and applicable locations</span></li>
+      <li><span class="step-n">3</span><span>Run a test transaction</span></li>
+      <li><span class="step-n">4</span><span>Verify the service charge appears on the order summary before payment</span></li>
+    </ol>
+    <div class="tip"><span class="tip-icon">💡</span><span><strong>Rep tip:</strong> Not every seller uses service charges. Ask first. If they do, make sure they understand how it differs from a tip — some sellers confuse the two.</span></div>
+    <div class="links">
+      <a class="link" href="https://squareup.com/help/us/en/article/7625-get-started-with-service-charges" target="_blank">Get started with service charges ↗</a>
+      <a class="link" href="https://squareup.com/help/us/en/article/8360-view-tax-fee-and-service-charge-reports" target="_blank">Tax, fee &amp; service charge reports ↗</a>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 5 — INVENTORY TRACKING
+════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="sec-header">
+    <div class="sec-title">5. Inventory tracking</div>
+    <div class="sec-count" id="sec_inventory_count">0 / 3 tasks</div>
+  </div>
+  <div class="why"><strong>Why this matters:</strong> Inventory tracking is optional but valuable for sellers who want to avoid overselling or get low-stock alerts. Set it up only if the seller opted in — don't enable it without their knowledge.</div>
+
+  <div class="task">
+    <label class="task-row chk-wrap" for="t_inv1">
+      <input type="checkbox" class="live-check task-cb" id="t_inv1" data-section="inventory">
+      <span class="chk"></span>
+      <span class="task-lbl">Verify inventory tracking settings</span>
+    </label>
+    <div class="task-desc">Confirm that inventory tracking is turned on for items that need it, and that opening stock counts are entered correctly.</div>
+    <ol class="steps">
+      <li><span class="step-n">1</span><span>Open an item in Dashboard</span></li>
+      <li><span class="step-n">2</span><span>Go to the Inventory section</span></li>
+      <li><span class="step-n">3</span><span>Confirm Track Inventory is enabled (toggle is on)</span></li>
+      <li><span class="step-n">4</span><span>Verify the current stock quantity is correct</span></li>
+      <li><span class="step-n">5</span><span>Check stock adjustment history if any prior adjustments exist</span></li>
+      <li><span class="step-n">6</span><span>Save any changes</span></li>
+    </ol>
+    <div class="tip"><span class="tip-icon">💡</span><span><strong>Rep tip:</strong> Before entering stock counts, ask the seller: "Have you done a count recently?" If not, schedule a physical count before you input quantities.</span></div>
+    <div class="links">
+      <a class="link" href="https://squareup.com/help/us/en/article/7746-tracking-your-inventory-with-square-for-retail" target="_blank">Track inventory with Square ↗</a>
+      <a class="link" href="https://squareup.com/help/us/en/article/6110-manage-inventory-with-the-retail-pos-app" target="_blank">View, receive &amp; adjust inventory ↗</a>
+    </div>
+  </div>
+
+  <div class="task">
+    <label class="task-row chk-wrap" for="t_inv2">
+      <input type="checkbox" class="live-check task-cb" id="t_inv2" data-section="inventory">
+      <span class="chk"></span>
+      <span class="task-lbl">Verify SKU and barcode setup</span>
+    </label>
+    <div class="task-desc">SKUs and barcodes let staff scan items rather than searching for them. Critical for retail sellers with large catalogs.</div>
+    <ol class="steps">
+      <li><span class="step-n">1</span><span>Open an item in Dashboard</span></li>
+      <li><span class="step-n">2</span><span>Select the variation</span></li>
+      <li><span class="step-n">3</span><span>Confirm the SKU is entered and is unique across all items</span></li>
+      <li><span class="step-n">4</span><span>Locate the GTIN/Barcode field</span></li>
+      <li><span class="step-n">5</span><span>Verify the barcode number matches the physical product label</span></li>
+      <li><span class="step-n">6</span><span>Test scan the barcode using the POS scanner</span></li>
+      <li><span class="step-n">7</span><span>Confirm the correct item populates automatically on screen</span></li>
+    </ol>
+    <div class="tip"><span class="tip-icon">💡</span><span><strong>Rep tip:</strong> SKU values can get corrupted when opening CSV files in Excel. If imported SKUs look wrong, open the CSV in a plain text editor to check the raw values.</span></div>
+    <div class="links">
+      <a class="link" href="https://squareup.com/help/us/en/article/8331-set-up-inventory-tracking" target="_blank">Set up inventory tracking (SKU/GTIN) ↗</a>
+      <a class="link" href="https://squareup.com/help/us/en/article/6172-import-item-library-troubleshooting" target="_blank">Troubleshoot item library importing ↗</a>
+    </div>
+  </div>
+
+  <div class="task">
+    <label class="task-row chk-wrap" for="t_inv3">
+      <input type="checkbox" class="live-check task-cb" id="t_inv3" data-section="inventory">
+      <span class="chk"></span>
+      <span class="task-lbl">Configure low-stock alerts</span>
+    </label>
+    <div class="task-desc">Low-stock alerts notify the seller when an item falls below a threshold. Great for items that frequently run out.</div>
+    <ol class="steps">
+      <li><span class="step-n">1</span><span>Dashboard → Items &amp; Orders → Inventory Management</span></li>
+      <li><span class="step-n">2</span><span>Open the item or variation</span></li>
+      <li><span class="step-n">3</span><span>Enable inventory tracking if not already on</span></li>
+      <li><span class="step-n">4</span><span>Enter a Low Stock Threshold (e.g. 5 units)</span></li>
+      <li><span class="step-n">5</span><span>Click Save</span></li>
+      <li><span class="step-n">6</span><span>Verify alert notifications are enabled in notification settings</span></li>
+      <li><span class="step-n">7</span><span>Test by temporarily adjusting stock below the threshold and confirming the alert triggers</span></li>
+    </ol>
+    <div class="tip"><span class="tip-icon">💡</span><span><strong>Rep tip:</strong> Ask the seller: "What quantity means you need to reorder?" Use that number as the threshold — not zero.</span></div>
+    <div class="links">
+      <a class="link" href="https://squareup.com/help/us/en/article/8333-create-inventory-alerts" target="_blank">Create inventory alerts ↗</a>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 6 — DATA IMPORTS
+════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="sec-header">
+    <div class="sec-title">6. Data imports</div>
+    <div class="sec-count" id="sec_imports_count">0 / 4 tasks</div>
+  </div>
+  <div class="why"><strong>Why this matters:</strong> Bulk imports save hours compared to manual entry. Use them when a seller has existing data — menus, customer lists, items, vendors. Always use Square's templates and verify data after import.</div>
+
+  <div class="task">
+    <label class="task-row chk-wrap" for="t_imp1">
+      <input type="checkbox" class="live-check task-cb" id="t_imp1" data-section="imports">
+      <span class="chk"></span>
+      <span class="task-lbl">Menu import via WoFlow (if migrating from another platform)</span>
+    </label>
+    <div class="task-desc">If the seller is moving from Toast, Olo, or another platform, WoFlow can migrate their menu directly. This saves hours of manual entry.</div>
+    <ol class="steps">
+      <li><span class="step-n">1</span><span>Dashboard → Items &amp; services → Menus</span></li>
+      <li><span class="step-n">2</span><span>Click Create a menu → Import your menu from another platform</span></li>
+      <li><span class="step-n">3</span><span>In the WoFlow modal, select the seller's current platform</span></li>
+      <li><span class="step-n">4</span><span>Choose import method: sign in securely or share a public URL</span></li>
+      <li><span class="step-n">5</span><span>Click Continue to sign in to the source platform</span></li>
+      <li><span class="step-n">6</span><span>Let the menu import — review progress</span></li>
+      <li><span class="step-n">7</span><span>Review the imported menu carefully, make edits if needed</span></li>
+      <li><span class="step-n">8</span><span>Click Approve to finalize</span></li>
+    </ol>
+    <div class="tip"><span class="tip-icon">💡</span><span><strong>Rep tip:</strong> Always review the imported menu with the seller present. Item names, prices, and modifiers often need cleanup after import.</span></div>
+    <div class="links">
+      <a class="link" href="https://squareup.com/help/us/en/article/6424-create-menus-with-square-for-restaurants" target="_blank">Create and update menus ↗</a>
+      <a class="link" href="https://squareup.com/help/us/en/article/8553-manage-your-menus-across-locations-and-sales-channels" target="_blank">Manage menus across locations ↗</a>
+      <a class="link" href="https://squareup.com/help/us/en/article/8312-manage-menu-items-and-categories-with-square-kiosk" target="_blank">Edit Square Kiosk menus ↗</a>
+    </div>
+  </div>
+
+  <div class="task">
+    <label class="task-row chk-wrap" for="t_imp2">
+      <input type="checkbox" class="live-check task-cb" id="t_imp2" data-section="imports">
+      <span class="chk"></span>
+      <span class="task-lbl">Bulk item/SKU import via spreadsheet</span>
+    </label>
+    <div class="task-desc">For sellers with 20+ items, import via CSV or Excel instead of entering each item manually. Required columns: Item Name, Variation Name, Description, SKU.</div>
+    <ol class="steps">
+      <li><span class="step-n">1</span><span>Dashboard → Items &amp; services → Items → Item library</span></li>
+      <li><span class="step-n">2</span><span>Click Actions → Export Library</span></li>
+      <li><span class="step-n">3</span><span>Download either the blank template or an export of existing items</span></li>
+      <li><span class="step-n">4</span><span>Fill in the spreadsheet — do NOT reorder or delete columns</span></li>
+      <li><span class="step-n">5</span><span>Required columns: Item Name, Variation Name, Description, SKU</span></li>
+      <li><span class="step-n">6</span><span>For multi-location accounts, add Enabled [Location Name] column</span></li>
+      <li><span class="step-n">7</span><span>Return to Item library → Actions → Import library</span></li>
+      <li><span class="step-n">8</span><span>Upload the file, confirm column matching, complete the import</span></li>
+    </ol>
+    <div class="tip"><span class="tip-icon">💡</span><span><strong>Rep tip:</strong> Open the CSV in Google Sheets instead of Excel to avoid SKU formatting issues. Excel sometimes converts numeric SKUs to scientific notation.</span></div>
+    <div class="links">
+      <a class="link" href="https://squareup.com/help/us/en/article/5153-import-items-online" target="_blank">Bulk import items ↗</a>
+      <a class="link" href="https://squareup.com/help/us/en/article/6172-import-item-library-troubleshooting" target="_blank">Troubleshoot item library importing ↗</a>
+    </div>
+  </div>
+
+  <div class="task">
+    <label class="task-row chk-wrap" for="t_imp3">
+      <input type="checkbox" class="live-check task-cb" id="t_imp3" data-section="imports">
+      <span class="chk"></span>
+      <span class="task-lbl">Customer import via Customer Directory</span>
+    </label>
+    <div class="task-desc">If the seller has an existing customer list, import it so they can start using Square's loyalty, marketing, and CRM tools immediately.</div>
+    <ol class="steps">
+      <li><span class="step-n">1</span><span>Customers → Customer directory → Directory</span></li>
+      <li><span class="step-n">2</span><span>Click Import/Export → Import customers</span></li>
+      <li><span class="step-n">3</span><span>Click Download template (or Next if file is ready)</span></li>
+      <li><span class="step-n">4</span><span>Upload the prepared file and click Next</span></li>
+      <li><span class="step-n">5</span><span>Review and assign the column fields (name, email, phone, etc.)</span></li>
+      <li><span class="step-n">6</span><span>Click Import</span></li>
+      <li><span class="step-n">7</span><span>Review the import summary — check imported, matched, and failed rows</span></li>
+      <li><span class="step-n">8</span><span>If errors exist, click Fix and reimport to download an error file and retry</span></li>
+    </ol>
+    <div class="tip"><span class="tip-icon">💡</span><span><strong>Rep tip:</strong> Ask the seller if they have a customer list before assuming they don't. Many sellers have spreadsheets or exported lists from a previous system.</span></div>
+    <div class="links">
+      <a class="link" href="https://squareup.com/help/us/en/article/5498-manage-your-customer-directory-online" target="_blank">Add customers to Customer Directory ↗</a>
+      <a class="link" href="https://squareup.com/help/us/en/article/6245-manage-customer-groups-and-filters" target="_blank">Create customer groups and filters ↗</a>
+    </div>
+  </div>
+
+  <div class="task">
+    <label class="task-row chk-wrap" for="t_imp4">
+      <input type="checkbox" class="live-check task-cb" id="t_imp4" data-section="imports">
+      <span class="chk"></span>
+      <span class="task-lbl">Team member setup (manual — no bulk import available)</span>
+    </label>
+    <div class="task-desc">Square does not have a documented bulk team member import. Each team member must be added manually. Note: Square supports exporting team data, just not importing it.</div>
+    <ol class="steps">
+      <li><span class="step-n">1</span><span>Staff → Team → Team members</span></li>
+      <li><span class="step-n">2</span><span>Click Add team member</span></li>
+      <li><span class="step-n">3</span><span>Enter the person's name and email address or phone number</span></li>
+      <li><span class="step-n">4</span><span>Enter job title, job details, and pay type</span></li>
+      <li><span class="step-n">5</span><span>Assign permissions — these control what staff can see and do</span></li>
+      <li><span class="step-n">6</span><span>Assign locations — this determines which POS they can access</span></li>
+      <li><span class="step-n">7</span><span>Generate a personal passcode for the team member</span></li>
+      <li><span class="step-n">8</span><span>Click Save to finish setup</span></li>
+      <li><span class="step-n">9</span><span>Repeat for each team member</span></li>
+    </ol>
+    <div class="tip"><span class="tip-icon">💡</span><span><strong>Rep tip:</strong> Set permissions carefully. A new cashier should not have access to refunds or end-of-day reports. Use permission sets to speed up setup for staff with the same role.</span></div>
+    <div class="links">
+      <a class="link" href="https://squareup.com/help/us/en/article/8356-add-and-manage-team-members" target="_blank">Add and manage team members ↗</a>
+      <a class="link" href="https://squareup.com/help/us/en/article/5822-employee-permissions" target="_blank">Create and edit permission sets ↗</a>
+      <a class="link" href="https://squareup.com/help/us/en/article/8368-new-hire-onboarding" target="_blank">Set up new hire onboarding ↗</a>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <span>Square POS Implementation Guide &mdash; for internal rep use</span>
+  <span>squareup.com/help/us/en</span>
+</div>
+
+<script>
+const TOTAL = 17;
+const SECTION_IDS = {pre:3, items:4, pos:1, taxes:2, inventory:3, imports:4};
+
+function update() {
+  const all = document.querySelectorAll('.task-cb');
+  const done = Array.from(all).filter(cb => cb.checked).length;
+  const pct = Math.round((done / TOTAL) * 100);
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = pct + '% complete \u2014 ' + done + ' of ' + TOTAL + ' tasks checked';
+  document.getElementById('statDone').textContent = done;
+  document.getElementById('statLeft').textContent = TOTAL - done;
+  document.getElementById('statPct').textContent = pct + '%';
+  document.getElementById('statStatus').textContent = pct === 100 ? 'Complete' : done > 0 ? 'In progress' : 'Not started';
+
+  Object.keys(SECTION_IDS).forEach(function(sec) {
+    const cbs = document.querySelectorAll('[data-section="' + sec + '"]');
+    const secDone = Array.from(cbs).filter(cb => cb.checked).length;
+    const el = document.getElementById('sec_' + sec + '_count');
+    if (el) el.textContent = secDone + ' / ' + SECTION_IDS[sec] + ' tasks';
+  });
+
+  all.forEach(function(cb) {
+    const lbl = cb.parentElement.querySelector('.task-lbl');
+    const chk = cb.parentElement.querySelector('.chk');
+    if (lbl) lbl.classList.toggle('done', cb.checked);
+    if (chk) {
+      chk.classList.toggle('done', cb.checked);
+      chk.textContent = cb.checked ? '✓' : '';
+    }
+    const task = cb.closest('.task');
+    if (task) {
+      task.querySelectorAll('.step-n').forEach(function(n) {
+        n.classList.toggle('done', cb.checked);
+      });
+    }
+  });
+}
+
+document.querySelectorAll('.task-cb').forEach(function(cb) {
+  cb.addEventListener('change', update);
+});
+
+update();
+</script>
+</body>
+</html>
