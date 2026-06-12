@@ -1088,16 +1088,25 @@ const SLACK_WEBHOOK_URL = atob(_sw[0]) + atob(_sw[1]) + atob(_sw[2]) + atob(_sw[
 
 function sendSlackNotification(task, closedBy) {
   const payload = JSON.stringify({
-    text: `✅ *Task Completed*\n*${task.title}*\n• Closed by: ${closedBy}\n• Created by: ${task.createdBy || 'Unknown'}\n• Priority: ${task.priority}\n• Due: ${task.due ? fmt(task.due) : 'No due date'}\n• Completed: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`
+    text: `✅ *Task Completed*\n*${task.title}*\n• Closed by: ${closedBy}\n• Assigned to: ${task.rep || 'Unknown'}\n• Priority: ${task.priority}\n• Due: ${task.due ? fmt(task.due) : 'No due date'}\n• Completed: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`
   });
 
-  fetch(SLACK_WEBHOOK_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `payload=${encodeURIComponent(payload)}`
-  })
-  .then(r => { console.log('Slack #tts-tasks:', r.status); })
-  .catch(e => { console.error('Slack error:', e); });
+  // Use navigator.sendBeacon as primary (works reliably cross-origin, no CORS preflight)
+  const blob = new Blob(['payload=' + encodeURIComponent(payload)], { type: 'application/x-www-form-urlencoded' });
+  const sent = navigator.sendBeacon(SLACK_WEBHOOK_URL, blob);
+  console.log('Slack #tts-tasks sendBeacon:', sent);
+
+  // Fallback: fetch with no-cors mode
+  if (!sent) {
+    fetch(SLACK_WEBHOOK_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'payload=' + encodeURIComponent(payload)
+    })
+    .then(() => { console.log('Slack #tts-tasks: sent via fetch fallback'); })
+    .catch(e => { console.error('Slack fetch error:', e); });
+  }
 }
 
 // ─── Email Notifications (EmailJS) ───────────────────────────────────────────
